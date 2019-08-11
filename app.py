@@ -2,9 +2,11 @@ import os
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
 from flask_jwt_extended import JWTManager#, jwt_required
+from flask import jsonify
 from resources.user import UserRegister, User, UserLogin, TokenRefresh
 from resources.store import StoreList, Store
 from resources.item import Item, ItemList
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -20,6 +22,21 @@ def add_claims_to_jwt(identity):
     if identity == 1:
         return {'is_admin':True}
     return {'is_admin':False}
+
+@jwt.expired_token_loader
+def expired_token_callback():
+    return jsonify({
+        'description': 'Token expired',
+        'error': 'token_expired'
+    }), 401
+
+@jwt.invalid_token_loader
+def expired_token_callback():
+    return jsonify({
+        'description': 'Signature verification failed',
+        'error': 'invalid_expired'
+    }), 401
+
 
 api.add_resource(Item, '/item/<string:name>')
 api.add_resource(ItemList, '/items')
